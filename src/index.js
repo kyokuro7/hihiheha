@@ -3,6 +3,7 @@ const { Telegraf, session } = require('telegraf');
 const deployCommand = require('./commands/deploy');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
+const OWNER_ID = parseInt(process.env.OWNER_ID, 10);
 
 // Setup session untuk menyimpan state percakapan
 bot.use(session());
@@ -12,6 +13,22 @@ bot.use((ctx, next) => {
   if (!ctx.session) {
     ctx.session = {};
   }
+  return next();
+});
+
+// Middleware: cek owner
+bot.use((ctx, next) => {
+  const userId = ctx.from?.id;
+
+  if (!OWNER_ID) {
+    console.warn('⚠️  OWNER_ID belum diset di .env! Bot terbuka untuk semua orang.');
+    return next();
+  }
+
+  if (userId !== OWNER_ID) {
+    return ctx.reply('🚫 Maaf, kamu tidak memiliki akses untuk menggunakan bot ini.');
+  }
+
   return next();
 });
 
